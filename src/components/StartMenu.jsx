@@ -12,7 +12,7 @@ const StartMenu = ({
   };
   return (
     <div className="start-menu">
-      <h1>Welcome To The Tucson Ravens Football Quiz! {currentUser}!</h1>
+      <h1>Welcome To Coach Lew&rsquo;s Quiz! {currentUser}!</h1>
       <button onClick={startQuiz} id="start-btn">
         Start Quiz
       </button>

@@ -710,7 +710,7 @@ export const QuizComponent = () => {
             <LeaderboardComponent users={topUsers} />
           )}
         </div>
-        <h1 id="quiz-title">Raven&rsquo;s Gridiron Quiz!</h1>
+        <h1 id="quiz-title">Coach Lew&rsquo;s Quiz!</h1>
       </header>
       {isQuizOver && (
         <div className="quiz-over">

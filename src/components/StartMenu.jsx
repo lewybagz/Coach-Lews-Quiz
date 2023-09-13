@@ -7,8 +7,8 @@ const StartMenu = ({
   hideInstructions,
 }) => {
   const startQuiz = () => {
-    onStart(); // Existing code for starting the quiz
-    hideInstructions(); // Close the instructions
+    onStart();
+    hideInstructions();
   };
   return (
     <div className="start-menu">

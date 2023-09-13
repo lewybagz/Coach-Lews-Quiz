@@ -90,8 +90,6 @@ export const calculateScore = (
   attempts,
   timeLeft
 ) => {
-  console.log("timeLeft:", timeLeft);
-
   const timeFactor = Math.max(0, timeLeft) / 5;
   // Base score per question
   const baseScore = 100 / questions.length;

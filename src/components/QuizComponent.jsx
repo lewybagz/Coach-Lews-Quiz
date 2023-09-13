@@ -6,9 +6,16 @@ import { useQuizTimer } from "./QuizLogic";
 import { calculateScore } from "./QuizLogic";
 import { shuffleArray, getRandomMessage } from "./QuizLogic";
 import { LeaderboardComponent } from "./LeaderboardComponent";
+import { getDatabase, ref, get, set } from "firebase/database";
+const db = getDatabase();
 
 export function QuizData() {
-  const currentUser = localStorage.getItem("currentUser");
+  let currentUser;
+  get(ref(db, "currentUser")).then((snapshot) => {
+    if (snapshot.exists()) {
+      currentUser = snapshot.val();
+    }
+  });
 
   const questions = [
     {
@@ -376,14 +383,18 @@ export const QuizComponent = () => {
   const [currentIncorrectMessage, setCurrentIncorrectMessage] = useState("");
   const [topUsers, setTopUsers] = useState([]);
   const [leaderboardVisible, setLeaderboardVisible] = useState(false);
-  const currentUser = localStorage.getItem("currentUser");
+  let currentUser;
+  get(ref(db, "currentUser")).then((snapshot) => {
+    if (snapshot.exists()) {
+      currentUser = snapshot.val();
+    }
+  });
 
   const upperCaseCurrentUser = currentUser ? currentUser.toUpperCase() : null;
 
   const [questions, setQuestions] = useState([]);
 
   useEffect(() => {
-    const currentUser = localStorage.getItem("currentUser"); // Get username from localStorage
     const {
       questions: initialQuestions,
       getSuccessMessages,
@@ -395,7 +406,7 @@ export const QuizComponent = () => {
     setQuestions(shuffledQuestions);
     setSuccessMessages(getSuccessMessages()); // Call the function here
     setIncorrectMessages(getIncorrectMessages()); // Call the function here
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     let index = null;
@@ -411,19 +422,18 @@ export const QuizComponent = () => {
     setCorrectAnswerIndex(index);
   }, [questions, currentQuestion]);
 
-  useEffect(
-    () => {
-      const storedUsers = JSON.parse(localStorage.getItem("scores")) || [];
-
-      const sortedUsers = storedUsers
-        .sort((a, b) => b.score - a.score)
-        .slice(0, 5);
-      setTopUsers(sortedUsers);
-    },
-    [
-      /* any dependencies that would cause this to re-run */
-    ]
-  );
+  useEffect(() => {
+    const scoresRef = ref(db, "scores");
+    get(scoresRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        const scoresData = snapshot.val();
+        const sortedUsers = Object.values(scoresData)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 5);
+        setTopUsers(sortedUsers);
+      }
+    });
+  }, []);
 
   const toggleLeaderboard = () => {
     setLeaderboardVisible(!leaderboardVisible);
@@ -637,17 +647,16 @@ export const QuizComponent = () => {
   const quizOver = () => {
     setIsQuizOver(true);
 
-    // Retrieve existing users from localStorage
-    let storedUsers = JSON.parse(localStorage.getItem("scores")) || [];
-
-    // Add current user's score
-    storedUsers.push({ name: upperCaseCurrentUser, score: score });
-
-    // Sort the users by score and keep the top 5
-    storedUsers = storedUsers.sort((a, b) => b.score - a.score).slice(0, 5);
-
-    // Save updated scores back to localStorage
-    localStorage.setItem("scores", JSON.stringify(storedUsers));
+    const scoresRef = ref(db, "scores");
+    get(scoresRef).then((snapshot) => {
+      let scoresData = [];
+      if (snapshot.exists()) {
+        scoresData = Object.values(snapshot.val());
+      }
+      scoresData.push({ name: upperCaseCurrentUser, score: score });
+      scoresData = scoresData.sort((a, b) => b.score - a.score).slice(0, 5);
+      set(scoresRef, scoresData);
+    });
   };
 
   let finalMessage = "";
@@ -710,7 +719,7 @@ export const QuizComponent = () => {
             <LeaderboardComponent users={topUsers} />
           )}
         </div>
-        <h1 id="quiz-title">Coach Lew&rsquo;s Quiz!</h1>
+        <h1 id="quiz-title">Raven&rsquo;s Gridiron Quiz!</h1>
       </header>
       {isQuizOver && (
         <div className="quiz-over">

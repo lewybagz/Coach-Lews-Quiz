@@ -1,30 +1,32 @@
 import { useState } from "react";
 import PropTypes from "prop-types";
+import { getDatabase, ref, set, child, get } from "firebase/database";
+import { logEvent } from "firebase/analytics";
+import { firebaseConfig } from "../services/firebaseConfig";
 
 export const FormComponent = ({ setFormVisible, onSubmit }) => {
   const [username, setUsername] = useState("");
   const [usernameWarning, setUsernameWarning] = useState("");
+  const db = getDatabase();
 
   const handleUsernameSubmit = (e) => {
     e.preventDefault();
 
-    const existingUsernames = localStorage.getItem("usernames")
-      ? localStorage.getItem("usernames").split(",")
-      : [];
+    const userRef = ref(db, "usernames/");
+    get(child(userRef, username)).then((snapshot) => {
+      if (snapshot.exists()) {
+        setUsernameWarning("Username already exists. Please try again.");
+        logEvent(firebaseConfig.analytics, "username_warning");
 
-    if (existingUsernames.includes(username)) {
-      setUsernameWarning("Username already exists. Please try again.");
-      return;
-    }
+        return;
+      } else {
+        set(ref(db, "usernames/" + username), username);
 
-    // Successful username creation
-    localStorage.setItem("currentUser", username);
-    existingUsernames.push(username);
-    localStorage.setItem("usernames", existingUsernames.join(","));
-
-    setUsername(username);
-    setFormVisible(false);
-    onSubmit();
+        setUsername(username);
+        setFormVisible(false);
+        onSubmit();
+      }
+    });
   };
 
   return (
@@ -57,4 +59,5 @@ export const FormComponent = ({ setFormVisible, onSubmit }) => {
 FormComponent.propTypes = {
   setFormVisible: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
+  setUsername: PropTypes.func.isRequired,
 };
